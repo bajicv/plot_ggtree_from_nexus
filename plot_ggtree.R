@@ -5,13 +5,13 @@
 #   Vladimir Bajić
 #
 # Last update:
-#   15 February 2024
+#   16 February 2024
 #
 # Usage:
 #   - Minimal example run requires a nexus file containing mutations
 #   Rscript --vanilla plot_ggtree.R -i input.nexus
 #
-#   - Plot and output in specific location. Do not provide extention.
+#   - Plot and output in specific location. Do not provide extension.
 #     It automatically saves .jpeg .pdf and .png files.
 #   Rscript --vanilla plot_ggtree.R -i input.nexus -o out_path_without_extension
 #
@@ -44,13 +44,13 @@ plot_ggtree <- function(tree) {
         coord_cartesian(clip = "off") +
         theme(plot.margin = unit(c(10, (plot_width * 3.5), 10, 5), "mm")) +
         geom_tippoint(color = "#081d58", size = 4) +
-        geom_label(aes(x = branch, label = mutations_labels), fill = "#a1d99b") +
+        geom_label2(aes(x = branch, label = mutations_labels, subset = mutations_labels != ""), fill = "#a1d99b") +
         geom_rootedge()
     return(gg_tree)
 }
 
 ## Function to plot rooted tree ------------------------------------------------
-plot_tree_with_outgroup <- function(tree) {
+plot_ggtree_with_outgroup <- function(tree) {
     ### Choose outgroup
     tree@phylo <-
         tree@phylo %>%
@@ -78,16 +78,16 @@ plot_tree_with_outgroup <- function(tree) {
         theme(plot.margin = unit(c(10, (plot_width * 3.5), 10, 5), "mm")) +
         geom_tippoint(color = "#081d58", size = 4) +
         geom_tippoint(aes(subset = (label == opt$r)), color = "#b30000", size = 4) +
-        geom_label(aes(x = branch, label = mutations_labels), fill = "#a1d99b") +
+        geom_label2(aes(x = branch, label = mutations_labels, subset = mutations_labels != ""), fill = "#a1d99b") +
         geom_point2(aes(subset = (label == opt$r)), shape = 23, size = 5, fill = "#b30000") +
         geom_rootedge()
 
     return(gg_tree)
 }
 
-## Function to adjust plot margines to ensure that all the lables fit ----------
-ajdust_plot_margin <- function(iqtree) {
-    ### asigne plot_height and plot_width to global enviroment
+## Function to adjust plot margins to ensure that all the labels fit ----------
+adjust_plot_margin <- function(iqtree) {
+    ### assign plot_height and plot_width to global environment
     plot_height <<- 5 + (length(iqtree@phylo$tip.label) * 0.2)
     plot_width <<- 30 + (max(nchar(iqtree@phylo$tip.label)) * 0.3)
 }
@@ -135,9 +135,9 @@ iqtree <- read.mega(opt$i)
 cat("Making mutation labels.\n")
 iqtree@data$mutations_labels <- unlist(lapply(iqtree@data$mutations, paste, collapse = ", "))
 
-# Ajust plot margin to ensure that labels fit ----------------------------------
+# Adjust plot margin to ensure that labels fit ----------------------------------
 cat("Adjusting plot margins.\n")
-ajdust_plot_margin(iqtree)
+adjust_plot_margin(iqtree)
 
 if (is.null(opt$o)) {
     opt$o <- tools::file_path_sans_ext(opt$i)
@@ -146,14 +146,14 @@ if (is.null(opt$o)) {
 
 if (is.null(opt$r)) {
     cat("Plotting unrooted tree.\n")
-    ## Plot and save ggtree without speficying outgroup
+    ## Plot and save ggtree without specifying outgroup
     suppressWarnings({
         plot_ggtree(iqtree) %>% save_ggtree()
     })
 } else {
     cat("Plotting tree with an outgroup:", opt$r, "\n")
-    ## Plot and save ggtree without speficying outgroup
+    ## Plot and save ggtree without specifying outgroup
     suppressWarnings({
-        plot_tree_with_outgroup(iqtree) %>% save_ggtree()
+        plot_ggtree_with_outgroup(iqtree) %>% save_ggtree()
     })
 }
